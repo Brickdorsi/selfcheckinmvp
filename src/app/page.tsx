@@ -1,0 +1,189 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Welcome } from "@/components/Welcome";
+import { DoorCodeCheck } from "@/components/DoorCodeCheck";
+import { MakeReservation } from "@/components/MakeReservation";
+import { CircuitSelection } from "@/components/CircuitSelection";
+import { DoorAccess } from "@/components/DoorAccess";
+import { Confirmation } from "@/components/Confirmation";
+import { NoDoorCode } from "@/components/NoDoorCode";
+import { SpaCircuit } from "@/types/spa";
+import { KioskModeWrapper } from "@/components/KioskModeWrapper";
+import { KioskModeButton } from "@/components/KioskModeButton";
+import { ScreenWakeLock } from "@/components/ScreenWakeLock";
+
+// Define the steps in the check-in flow
+enum CheckInStep {
+  WELCOME = "welcome",
+  DOOR_CODE_CHECK = "door_code_check",
+  MAKE_RESERVATION = "make_reservation",
+  CIRCUIT_SELECTION = "circuit_selection",
+  DOOR_ACCESS = "door_access",
+  CONFIRMATION = "confirmation",
+  NO_DOOR_CODE = "no_door_code",
+}
+
+// Define the spa circuits
+const spaCircuits: SpaCircuit[] = [
+  {
+    id: "health-circuit",
+    name: "🩺 Health Circuit",
+    description:
+      "5 min Cold Plunge → 5 min Red Light → 40 min Sauna. Boosts immunity, lowers stress, enhances balance.",
+  },
+  {
+    id: "cold-circuit",
+    name: "❄️ Cold Circuit",
+    description:
+      "5 min Cold Plunge → 5 min Red Light → 5 min Cold → 30 min Sauna → 5 min Cold. Cold exposure increases norepinephrine for sharper focus, energy, and mood.",
+  },
+  {
+    id: "heat-circuit",
+    name: "🔥 Heat Circuit",
+    description:
+      "2 min Cold Plunge → 50 min Sauna. Ends with intense heat to activate heat shock proteins, support detox, and circulation.",
+  },
+  {
+    id: "skin-rejuvenation",
+    name: "💎 Skin Rejuvenation Circuit",
+    description:
+      "5 min Cold Plunge → 15 min Red Light → 30 min Sauna. Light + heat combo for collagen production, glowing skin, and rejuvenation.",
+  },
+  {
+    id: "freestyle",
+    name: "🎛️ Freestyle Mode",
+    description:
+      "No rules. Create your own healing flow. Listen to your body. It knows what to do.",
+  },
+];
+
+export default function Home() {
+  const [currentStep, setCurrentStep] = useState<CheckInStep>(
+    CheckInStep.WELCOME
+  );
+  const [selectedCircuit, setSelectedCircuit] = useState<SpaCircuit | null>(
+    null
+  );
+
+  // Apply dark theme to body
+  useEffect(() => {
+    document.body.classList.add("bg-[#1a1a1a]");
+    return () => {
+      document.body.classList.remove("bg-[#1a1a1a]");
+    };
+  }, []);
+
+  // Handlers for navigation
+  const handleCheckIn = () => setCurrentStep(CheckInStep.DOOR_CODE_CHECK);
+  const handleMakeReservation = () =>
+    setCurrentStep(CheckInStep.MAKE_RESERVATION);
+  const handleHasDoorCode = () => {
+    setCurrentStep(CheckInStep.CIRCUIT_SELECTION);
+  };
+  const handleNoDoorCode = () => {
+    setCurrentStep(CheckInStep.NO_DOOR_CODE);
+  };
+  const handleSelectCircuit = (circuit: SpaCircuit) => {
+    setSelectedCircuit(circuit);
+    setCurrentStep(CheckInStep.DOOR_ACCESS);
+  };
+  const handleConfirmation = () => setCurrentStep(CheckInStep.CONFIRMATION);
+  const handleStartOver = () => setCurrentStep(CheckInStep.WELCOME);
+  const handleBackToWelcome = () => setCurrentStep(CheckInStep.WELCOME);
+  const handleBackToCircuitSelection = () =>
+    setCurrentStep(CheckInStep.CIRCUIT_SELECTION);
+  const handleBackToDoorCodeCheck = () =>
+    setCurrentStep(CheckInStep.DOOR_CODE_CHECK);
+
+  // Render the appropriate component based on the current step
+  const renderStep = () => {
+    switch (currentStep) {
+      case CheckInStep.WELCOME:
+        return (
+          <Welcome
+            onCheckIn={handleCheckIn}
+            onMakeReservation={handleMakeReservation}
+          />
+        );
+      case CheckInStep.DOOR_CODE_CHECK:
+        return (
+          <DoorCodeCheck
+            onHasDoorCode={handleHasDoorCode}
+            onNoDoorCode={handleNoDoorCode}
+            onBackToWelcome={handleBackToWelcome}
+          />
+        );
+      case CheckInStep.MAKE_RESERVATION:
+        return <MakeReservation onBackToWelcome={handleBackToWelcome} />;
+      case CheckInStep.CIRCUIT_SELECTION:
+        return (
+          <CircuitSelection
+            circuits={spaCircuits}
+            onSelectCircuit={handleSelectCircuit}
+            onBackToWelcome={handleBackToWelcome}
+          />
+        );
+      case CheckInStep.DOOR_ACCESS:
+        return (
+          <DoorAccess
+            selectedCircuit={selectedCircuit}
+            onBackToCircuitSelection={handleBackToCircuitSelection}
+            onConfirm={handleConfirmation}
+          />
+        );
+      case CheckInStep.CONFIRMATION:
+        return (
+          <Confirmation
+            selectedCircuit={selectedCircuit}
+            onStartOver={handleStartOver}
+          />
+        );
+      case CheckInStep.NO_DOOR_CODE:
+        return (
+          <NoDoorCode
+            onBackToDoorCodeCheck={handleBackToDoorCodeCheck}
+            onMakeReservation={handleMakeReservation}
+          />
+        );
+      default:
+        return (
+          <Welcome
+            onCheckIn={handleCheckIn}
+            onMakeReservation={handleMakeReservation}
+          />
+        );
+    }
+  };
+
+  return (
+    <>
+      <KioskModeButton />
+      <ScreenWakeLock />
+      <KioskModeWrapper>
+        <div className="h-screen w-screen flex flex-col items-center justify-center p-4 bg-[#0a0a0a] text-white overflow-hidden">
+          {/* Background pattern */}
+          <div className="absolute inset-0 bg-[#0a0a0a] overflow-hidden">
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute inset-0 bg-[radial-gradient(#c19a6b_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+            </div>
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#c19a6b]/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#c19a6b]/20 to-transparent"></div>
+            </div>
+          </div>
+
+          {/* Main content container */}
+          <div className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto h-full max-h-screen">
+            {/* Main content area */}
+            <div className="flex-1 flex items-center justify-center w-full max-w-4xl mx-auto overflow-hidden">
+              <div className="w-full transform scale-[0.95] transition-all duration-500">
+                {renderStep()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </KioskModeWrapper>
+    </>
+  );
+}
