@@ -20,6 +20,61 @@ export function Confirmation({
   onStartOver,
 }: ConfirmationProps) {
   const [timeLeft, setTimeLeft] = useState(60); // 60 seconds = 1 minute
+  const [animationProgress, setAnimationProgress] = useState(0);
+
+  // Animation states for each section
+  const [visibleSections, setVisibleSections] = useState({
+    header: false,
+    circuitDetails: false,
+    confirmationMessage: false,
+    inRoomDisplay: false,
+    bookingLength: false,
+    doorAccess: false,
+    footer: false,
+  });
+
+  // Animation sequence
+  useEffect(() => {
+    // Show header immediately
+    setVisibleSections((prev) => ({ ...prev, header: true }));
+    setAnimationProgress(5);
+
+    // Sequence for showing each section with delay
+    const timers = [
+      setTimeout(() => {
+        setVisibleSections((prev) => ({ ...prev, circuitDetails: true }));
+        setAnimationProgress(20);
+      }, 400),
+      setTimeout(() => {
+        setVisibleSections((prev) => ({
+          ...prev,
+          confirmationMessage: true,
+        }));
+        setAnimationProgress(40);
+      }, 800),
+      setTimeout(() => {
+        setVisibleSections((prev) => ({ ...prev, inRoomDisplay: true }));
+        setAnimationProgress(60);
+      }, 1200),
+      setTimeout(() => {
+        setVisibleSections((prev) => ({ ...prev, bookingLength: true }));
+        setAnimationProgress(80);
+      }, 1600),
+      setTimeout(() => {
+        setVisibleSections((prev) => ({ ...prev, doorAccess: true }));
+        setAnimationProgress(90);
+      }, 2000),
+      setTimeout(() => {
+        setVisibleSections((prev) => ({ ...prev, footer: true }));
+        setAnimationProgress(100);
+      }, 2400),
+    ];
+
+    // Clean up timers
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, []);
 
   // Auto start over after 1 minute
   useEffect(() => {
@@ -61,7 +116,21 @@ export function Confirmation({
 
   return (
     <Card className="w-full bg-gradient-to-b from-[#1a1a1a] to-[#121212] border-[#c19a6b]/30 border-2 rounded-3xl overflow-hidden shadow-2xl">
-      <div className="bg-gradient-to-r from-[#121212] to-[#1a1a1a] p-8 rounded-t-3xl border-b border-[#c19a6b]/20">
+      {/* Animation Progress Bar */}
+      <div className="relative h-1 w-full bg-[#1a1a1a] overflow-hidden">
+        <div
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#c19a6b]/70 to-[#c19a6b] transition-all duration-300"
+          style={{ width: `${animationProgress}%` }}
+        ></div>
+      </div>
+
+      <div
+        className={`bg-gradient-to-r from-[#121212] to-[#1a1a1a] p-8 rounded-t-3xl border-b border-[#c19a6b]/20 transition-all duration-500 ease-out ${
+          visibleSections.header
+            ? "opacity-100 transform-none"
+            : "opacity-0 transform scale-90"
+        }`}
+      >
         <CardHeader className="text-center pb-0">
           <CardTitle className="text-5xl font-light tracking-wider text-white">
             Thank You!
@@ -75,7 +144,13 @@ export function Confirmation({
         {/* Main content grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Selected Circuit Details */}
-          <div className="bg-[#0e0e0e] p-8 rounded-xl border border-[#c19a6b]/40 space-y-4 text-center hover:border-[#c19a6b]/60 transition-all duration-300 shadow-lg">
+          <div
+            className={`bg-[#0e0e0e] p-8 rounded-xl border border-[#c19a6b]/40 space-y-4 text-center transition-all duration-700 ease-out ${
+              visibleSections.circuitDetails
+                ? "opacity-100 transform-none hover:border-[#c19a6b]/60"
+                : "opacity-0 transform scale-75 -translate-y-10"
+            }`}
+          >
             <h3 className="text-2xl font-light text-white">
               Your Selected Circuit
             </h3>
@@ -92,7 +167,13 @@ export function Confirmation({
           </div>
 
           {/* Confirmation Message */}
-          <div className="bg-[#0e0e0e] p-8 rounded-xl border border-[#c19a6b]/20 space-y-4 text-center shadow-lg">
+          <div
+            className={`bg-[#0e0e0e] p-8 rounded-xl border border-[#c19a6b]/20 space-y-4 text-center transition-all duration-700 ease-out ${
+              visibleSections.confirmationMessage
+                ? "opacity-100 transform-none shadow-lg"
+                : "opacity-0 transform scale-75 translate-y-10"
+            }`}
+          >
             <h3 className="text-2xl font-light bg-gradient-to-r from-[#e0c9a6] to-[#c19a6b] bg-clip-text text-transparent">
               You&apos;re All Set!
             </h3>
@@ -126,7 +207,13 @@ export function Confirmation({
         </div>
 
         {/* In-Room Display Information */}
-        <div className="bg-gradient-to-br from-[#c19a6b]/10 to-[#121212] p-6 rounded-xl border-2 border-[#c19a6b]/40 shadow-xl">
+        <div
+          className={`bg-gradient-to-br from-[#c19a6b]/10 to-[#121212] p-6 rounded-xl border-2 border-[#c19a6b]/40 transition-all duration-700 ease-out ${
+            visibleSections.inRoomDisplay
+              ? "opacity-100 transform-none shadow-xl"
+              : "opacity-0 transform scale-90"
+          }`}
+        >
           <h3 className="text-2xl font-light text-center text-white border-b border-[#c19a6b]/30 pb-3 mb-4">
             <span className="font-medium text-[#c19a6b]">
               Inside Your Suite
@@ -201,8 +288,86 @@ export function Confirmation({
           </div>
         </div>
 
+        {/* Booking Length and Rounds */}
+        <div
+          className={`bg-gradient-to-br from-[#1a1a1a] to-[#0e0e0e] p-6 rounded-xl border-2 border-[#c19a6b]/40 transition-all duration-700 ease-out ${
+            visibleSections.bookingLength
+              ? "opacity-100 transform-none shadow-xl"
+              : "opacity-0 transform scale-90"
+          }`}
+        >
+          <h3 className="text-2xl font-light text-center text-white border-b border-[#c19a6b]/30 pb-3 mb-4">
+            <span className="font-medium text-[#c19a6b]">How Many Rounds?</span>
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#121212] p-5 rounded-lg border border-[#c19a6b]/20">
+              <h4 className="text-xl font-medium text-white text-center mb-4">
+                Your Booking Length Determines Your Experience
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#0e0e0e] p-3 rounded-lg text-center border border-[#c19a6b]/10">
+                  <p className="text-lg font-medium text-[#c19a6b]">1 Hour</p>
+                  <p className="text-white text-sm">=</p>
+                  <p className="text-white">1 Round</p>
+                </div>
+                <div className="bg-[#0e0e0e] p-3 rounded-lg text-center border border-[#c19a6b]/10">
+                  <p className="text-lg font-medium text-[#c19a6b]">2 Hours</p>
+                  <p className="text-white text-sm">=</p>
+                  <p className="text-white">2 Rounds</p>
+                </div>
+                <div className="bg-[#0e0e0e] p-3 rounded-lg text-center border border-[#c19a6b]/10">
+                  <p className="text-lg font-medium text-[#c19a6b]">3 Hours</p>
+                  <p className="text-white text-sm">=</p>
+                  <p className="text-white">3 Rounds</p>
+                </div>
+                <div className="bg-[#0e0e0e] p-3 rounded-lg text-center border border-[#c19a6b]/10">
+                  <p className="text-lg font-medium text-[#c19a6b]">4 Hours</p>
+                  <p className="text-white text-sm">=</p>
+                  <p className="text-white">4 Rounds</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-between bg-[#121212] p-5 rounded-lg border border-[#c19a6b]/20">
+              <div>
+                <p className="text-lg text-white text-center mb-2">
+                  We recommend{" "}
+                  <span className="text-[#c19a6b] font-medium">3 rounds</span>{" "}
+                  for maximum recovery
+                </p>
+                <p className="text-gray-300 text-sm text-center">
+                  Each cycle unlocks deeper benefits as your body adapts to the
+                  contrast therapy.
+                </p>
+              </div>
+
+              <div className="mt-4 bg-[#0a0a0a] p-4 rounded-lg border border-[#c19a6b]/10">
+                <p className="text-sm text-gray-300 mb-2">
+                  To add more rounds/hours to your reservation, email us at:
+                </p>
+                <p className="text-[#c19a6b] font-medium text-center">
+                  saunasuites@gmail.com
+                </p>
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  Subject: "Extend Stay"
+                </p>
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  Remember our website is saunasuites.net (not .com)
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Door Access Reminder */}
-        <div className="bg-gradient-to-r from-[#1a1a1a] to-[#0e0e0e] p-6 rounded-xl border border-[#c19a6b]/50 shadow-lg">
+        <div
+          className={`bg-gradient-to-r from-[#1a1a1a] to-[#0e0e0e] p-6 rounded-xl border border-[#c19a6b]/50 transition-all duration-700 ease-out ${
+            visibleSections.doorAccess
+              ? "opacity-100 transform-none shadow-lg"
+              : "opacity-0 transform scale-90"
+          }`}
+        >
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="bg-[#c19a6b]/20 p-3 rounded-full">
@@ -238,7 +403,13 @@ export function Confirmation({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between pb-8 px-8 bg-[#1e1e1e]">
+      <CardFooter
+        className={`flex justify-between pb-8 px-8 bg-[#1e1e1e] transition-all duration-500 ease-out ${
+          visibleSections.footer
+            ? "opacity-100 transform-none"
+            : "opacity-0 transform -translate-y-10"
+        }`}
+      >
         <div className="text-sm text-[#c19a6b]">
           Auto-reset in {formatTime(timeLeft)}
         </div>

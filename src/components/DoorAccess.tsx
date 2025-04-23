@@ -145,6 +145,26 @@ export function DoorAccess({
                 {selectedCircuit.description}
               </p>
 
+              {selectedCircuit.isGroupCircuit && (
+                <div className="bg-[#121212] p-4 rounded-lg mt-6 border border-[#c19a6b]/30">
+                  <p className="text-sm text-[#e0c9a6] flex items-center justify-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    This is optimized for 3-4 people
+                  </p>
+                </div>
+              )}
+
               <div className="bg-[#121212] p-4 rounded-lg mt-6 border border-[#c19a6b]/30">
                 <p className="text-sm text-[#e0c9a6] flex items-center justify-center gap-2">
                   <svg

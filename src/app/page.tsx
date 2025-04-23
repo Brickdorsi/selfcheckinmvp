@@ -8,16 +8,19 @@ import { CircuitSelection } from "@/components/CircuitSelection";
 import { DoorAccess } from "@/components/DoorAccess";
 import { Confirmation } from "@/components/Confirmation";
 import { NoDoorCode } from "@/components/NoDoorCode";
+import { GroupSizeSelection } from "@/components/GroupSizeSelection";
 import { SpaCircuit } from "@/types/spa";
 import { KioskModeWrapper } from "@/components/KioskModeWrapper";
 import { KioskModeButton } from "@/components/KioskModeButton";
 import { ScreenWakeLock } from "@/components/ScreenWakeLock";
+import { ProgressSidebar } from "@/components/ProgressSidebar";
 
 // Define the steps in the check-in flow
 enum CheckInStep {
   WELCOME = "welcome",
   DOOR_CODE_CHECK = "door_code_check",
   MAKE_RESERVATION = "make_reservation",
+  GROUP_SIZE_SELECTION = "group_size_selection",
   CIRCUIT_SELECTION = "circuit_selection",
   DOOR_ACCESS = "door_access",
   CONFIRMATION = "confirmation",
@@ -56,6 +59,13 @@ const spaCircuits: SpaCircuit[] = [
     description:
       "No rules. Create your own healing flow. Listen to your body. It knows what to do.",
   },
+  {
+    id: "group-circuit",
+    name: "👥 Group Circuit Flow",
+    description:
+      "Step 1: Split into 2 groups - Group A (2 guests) starts in sauna, Group B (1-2 guests) rotates between cold plunge & red light. Step 2: Group B does 3 rounds of 5 min red light → 5 min cold plunge (30 min total) while Group A stays in sauna. Step 3: Groups switch.",
+    isGroupCircuit: true,
+  },
 ];
 
 export default function Home() {
@@ -67,6 +77,7 @@ export default function Home() {
   );
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
   const INACTIVITY_TIMEOUT = 60000; // 1 minute in milliseconds
+  const [isLargeGroup, setIsLargeGroup] = useState<boolean>(false);
 
   // Apply dark theme to body
   useEffect(() => {
@@ -118,11 +129,30 @@ export default function Home() {
   const handleMakeReservation = () =>
     setCurrentStep(CheckInStep.MAKE_RESERVATION);
   const handleHasDoorCode = () => {
-    setCurrentStep(CheckInStep.CIRCUIT_SELECTION);
+    setCurrentStep(CheckInStep.GROUP_SIZE_SELECTION);
   };
   const handleNoDoorCode = () => {
     setCurrentStep(CheckInStep.NO_DOOR_CODE);
   };
+
+  const handleSmallGroup = () => {
+    setIsLargeGroup(false);
+    setCurrentStep(CheckInStep.CIRCUIT_SELECTION);
+  };
+
+  const handleLargeGroup = () => {
+    setIsLargeGroup(true);
+    // For large groups, automatically select the group circuit and go to door access
+    const groupCircuit = spaCircuits.find((circuit) => circuit.isGroupCircuit);
+    if (groupCircuit) {
+      setSelectedCircuit(groupCircuit);
+      setCurrentStep(CheckInStep.DOOR_ACCESS);
+    } else {
+      // Fallback to circuit selection if no group circuit found
+      setCurrentStep(CheckInStep.CIRCUIT_SELECTION);
+    }
+  };
+
   const handleSelectCircuit = (circuit: SpaCircuit) => {
     setSelectedCircuit(circuit);
     setCurrentStep(CheckInStep.DOOR_ACCESS);
@@ -134,6 +164,8 @@ export default function Home() {
     setCurrentStep(CheckInStep.CIRCUIT_SELECTION);
   const handleBackToDoorCodeCheck = () =>
     setCurrentStep(CheckInStep.DOOR_CODE_CHECK);
+  const handleBackToGroupSizeSelection = () =>
+    setCurrentStep(CheckInStep.GROUP_SIZE_SELECTION);
 
   // Render the appropriate component based on the current step
   const renderStep = () => {
@@ -153,21 +185,41 @@ export default function Home() {
             onBackToWelcome={handleBackToWelcome}
           />
         );
+      case CheckInStep.GROUP_SIZE_SELECTION:
+        return (
+          <GroupSizeSelection
+            onSmallGroup={handleSmallGroup}
+            onLargeGroup={handleLargeGroup}
+            onBackToDoorCodeCheck={handleBackToDoorCodeCheck}
+          />
+        );
       case CheckInStep.MAKE_RESERVATION:
         return <MakeReservation onBackToWelcome={handleBackToWelcome} />;
       case CheckInStep.CIRCUIT_SELECTION:
         return (
           <CircuitSelection
-            circuits={spaCircuits}
+            circuits={
+              isLargeGroup
+                ? spaCircuits.filter((circuit) => circuit.isGroupCircuit)
+                : spaCircuits.filter((circuit) => !circuit.isGroupCircuit)
+            }
             onSelectCircuit={handleSelectCircuit}
-            onBackToWelcome={handleBackToWelcome}
+            onBackToWelcome={
+              isLargeGroup
+                ? handleBackToGroupSizeSelection
+                : handleBackToWelcome
+            }
           />
         );
       case CheckInStep.DOOR_ACCESS:
         return (
           <DoorAccess
             selectedCircuit={selectedCircuit}
-            onBackToCircuitSelection={handleBackToCircuitSelection}
+            onBackToCircuitSelection={
+              isLargeGroup
+                ? handleBackToGroupSizeSelection
+                : handleBackToCircuitSelection
+            }
             onConfirm={handleConfirmation}
           />
         );
@@ -200,6 +252,12 @@ export default function Home() {
       <KioskModeButton />
       <ScreenWakeLock />
       <KioskModeWrapper>
+        {/* Progress Sidebar - only shown for actual check-in steps */}
+        {currentStep !== CheckInStep.WELCOME &&
+          currentStep !== CheckInStep.MAKE_RESERVATION && (
+            <ProgressSidebar currentStep={currentStep} />
+          )}
+
         <div className="min-h-screen w-screen flex flex-col items-center justify-center p-4 bg-[#0a0a0a] text-white">
           {/* Background pattern */}
           <div className="absolute inset-0 bg-[#0a0a0a]">
