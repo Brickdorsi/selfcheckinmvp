@@ -65,6 +65,8 @@ export default function Home() {
   const [selectedCircuit, setSelectedCircuit] = useState<SpaCircuit | null>(
     null
   );
+  const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
+  const INACTIVITY_TIMEOUT = 60000; // 1 minute in milliseconds
 
   // Apply dark theme to body
   useEffect(() => {
@@ -73,6 +75,43 @@ export default function Home() {
       document.body.classList.remove("bg-[#1a1a1a]");
     };
   }, []);
+
+  // Reset to Welcome screen after inactivity
+  useEffect(() => {
+    // Skip for Welcome and Confirmation screens (Confirmation has its own timer)
+    if (
+      currentStep === CheckInStep.WELCOME ||
+      currentStep === CheckInStep.CONFIRMATION
+    ) {
+      return;
+    }
+
+    // Track user activity
+    const handleUserActivity = () => {
+      setLastActivityTime(Date.now());
+    };
+
+    // Add event listeners for user interaction
+    window.addEventListener("click", handleUserActivity);
+    window.addEventListener("touchstart", handleUserActivity);
+    window.addEventListener("mousemove", handleUserActivity);
+
+    // Check for inactivity
+    const inactivityCheck = setInterval(() => {
+      const currentTime = Date.now();
+      if (currentTime - lastActivityTime > INACTIVITY_TIMEOUT) {
+        setCurrentStep(CheckInStep.WELCOME);
+      }
+    }, 10000); // Check every 10 seconds
+
+    // Clean up
+    return () => {
+      clearInterval(inactivityCheck);
+      window.removeEventListener("click", handleUserActivity);
+      window.removeEventListener("touchstart", handleUserActivity);
+      window.removeEventListener("mousemove", handleUserActivity);
+    };
+  }, [currentStep, lastActivityTime]);
 
   // Handlers for navigation
   const handleCheckIn = () => setCurrentStep(CheckInStep.DOOR_CODE_CHECK);
@@ -161,9 +200,9 @@ export default function Home() {
       <KioskModeButton />
       <ScreenWakeLock />
       <KioskModeWrapper>
-        <div className="h-screen w-screen flex flex-col items-center justify-center p-4 bg-[#0a0a0a] text-white overflow-hidden">
+        <div className="min-h-screen w-screen flex flex-col items-center justify-center p-4 bg-[#0a0a0a] text-white">
           {/* Background pattern */}
-          <div className="absolute inset-0 bg-[#0a0a0a] overflow-hidden">
+          <div className="absolute inset-0 bg-[#0a0a0a]">
             <div className="absolute inset-0 opacity-5">
               <div className="absolute inset-0 bg-[radial-gradient(#c19a6b_1px,transparent_1px)] bg-[length:20px_20px]"></div>
             </div>
@@ -174,9 +213,9 @@ export default function Home() {
           </div>
 
           {/* Main content container */}
-          <div className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto h-full max-h-screen">
+          <div className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto">
             {/* Main content area */}
-            <div className="flex-1 flex items-center justify-center w-full max-w-4xl mx-auto overflow-hidden">
+            <div className="flex-1 flex items-center justify-center w-full max-w-4xl mx-auto">
               <div className="w-full transform scale-[0.95] transition-all duration-500">
                 {renderStep()}
               </div>
